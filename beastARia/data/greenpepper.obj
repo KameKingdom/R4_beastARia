@@ -1,6 +1,6 @@
 # Blender 3.5.1
 # www.blender.org
-mtllib green_pepper.mtl
+mtllib greenpepper.mtl
 o 円錐
 o 円柱
 v -0.860948 -135.325684 -107.716675
