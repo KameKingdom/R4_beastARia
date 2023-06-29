@@ -43,7 +43,7 @@ void setup() {
   // キャラクターの作成 //
   characters = new Character[character_num];
   characters[0] = new Character("greenpepper.obj", 100, 10, 0.2);
-  characters[1] = new Character("rocket.obj", 100, 10, 0.3);
+  characters[1] = new Character("rocket.obj", 80, 10, 0.3);
   characters[2] = new Character("SubstancePlayerExport.obj", 100, 10, 0.5);
 }
 
@@ -69,9 +69,9 @@ void draw() {
         // HPゲージ //
         pushMatrix();
         translate(0, 0, 100); // オブジェクトの上にHPゲージを配置するための変換
-        fill(0, 255, 0); // HPゲージを緑色に
-        float hpBarLength = map(characters[i].HP, 0, 100, 0, 50); // HPの値に基づいてHPゲージの長さを計算
-        box(hpBarLength, 5, 5); // HPゲージを描画
+        fill(0, 255, 0); // HPゲージ: 緑色
+        float hpBarLength = map(characters[i].HP, 0, 100, 0, 50);
+        box(hpBarLength, 5, 5); // HPゲージ描画
         popMatrix();
         fill(255);
         
