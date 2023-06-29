@@ -68,7 +68,7 @@ void draw() {
         
         // HPゲージ //
         pushMatrix();
-        translate(0, -50, 100); // オブジェクトの上にHPゲージを配置するための変換
+        translate(0, 0, 100); // オブジェクトの上にHPゲージを配置するための変換
         fill(0, 255, 0); // HPゲージを緑色に
         float hpBarLength = map(characters[i].HP, 0, 100, 0, 50); // HPの値に基づいてHPゲージの長さを計算
         box(hpBarLength, 5, 5); // HPゲージを描画
