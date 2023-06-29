@@ -1,5 +1,3 @@
-// ctrl + shift + b 実行
-
 // ライブラリのインポート
 import processing.video.*;
 import jp.nyatla.nyar4psg.*;
@@ -9,6 +7,9 @@ Capture camera; // カメラ
 MultiMarker[] markers; // マーカー
 Character[] characters; // キャラクターの配列変数
 int character_num = 3; // キャラクターの数
+int attackerIndex = -1; // 攻撃側キャラクターのインデックス
+int victimIndex = -1; // 被攻撃側キャラクターのインデックス
+boolean isAttacking = false; // 攻撃開始フラグ
 
 // キャラクターのクラス //
 class Character {
@@ -16,14 +17,21 @@ class Character {
   int HP;
   int ATK;
   float scale;
+  int maxHP;
+  int damage = 0;
   
-  Character(String filename, int HP, int ATK, float scale) {
+  Character(String filename, int maxHP, int ATK, float scale) {
     shape = loadShape(filename);
-    this.HP = HP;
+    this.maxHP = maxHP;
+    this.HP = maxHP - damage;
     this.ATK = ATK;
     this.scale = scale;
   }
- 
+  
+  void takeDamage(int damage) {
+    this.HP -= damage;
+    if (this.HP < 0) this.HP = 0;
+  }
 }
 
 void setup() {
@@ -44,7 +52,7 @@ void setup() {
   characters = new Character[character_num];
   characters[0] = new Character("greenpepper.obj", 100, 10, 0.2);
   characters[1] = new Character("rocket.obj", 80, 10, 0.3);
-  characters[2] = new Character("SubstancePlayerExport.obj", 100, 10, 0.5);
+  characters[2] = new Character("SubstancePlayerExport.obj", 100, 10, 0.7);
 }
 
 void draw() {
@@ -66,18 +74,41 @@ void draw() {
         shape(characters[i].shape);
         popMatrix();
         
-        // HPゲージ //
+        // HPの表示 //
         pushMatrix();
-        translate(0, 0, 100); // オブジェクトの上にHPゲージを配置するための変換
-        fill(0, 255, 0); // HPゲージ: 緑色
-        float hpBarLength = map(characters[i].HP, 0, 100, 0, 50);
-        box(hpBarLength, 5, 5); // HPゲージ描画
+        translate(0, 0, (characters[i].scale + 1) * 100); // オブジェクトの上にHPを配置するための変換
+        textMode(SHAPE);
+        textSize(60);
+        rotateX(- PI / 2);
+        fill(255); // 文字色：白
+        text(characters[i].HP, 0, 0); // HPの値をテキストとして描画
         popMatrix();
+
         fill(255);
         
-        markers[i].endTransform();// マーカー中心を原点から解除
-        
+        markers[i].endTransform(); // マーカー中心を原点から解除
       }
     }
+
+    if (isAttacking) {
+      characters[victimIndex].takeDamage(characters[attackerIndex].ATK);
+      isAttacking = false;
+    }
   }
+}
+
+
+void keyReleased() {
+  if (key == 'a') {
+    String attacker = prompt("攻撃者の番号を入力してください(0~2): ");
+    String victim = prompt("被攻撃者の番号を入力してください(0~2): ");
+    attackerIndex = Integer.parseInt(attacker);
+    victimIndex = Integer.parseInt(victim);
+    isAttacking = true;
+  }
+}
+
+// ダイアログで数字を入力するための関数
+String prompt(String message) {
+  return javax.swing.JOptionPane.showInputDialog(message);
 }
