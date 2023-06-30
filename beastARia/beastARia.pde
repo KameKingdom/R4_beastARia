@@ -7,11 +7,14 @@ import jp.nyatla.nyar4psg.*;
 // 変数の宣言 //
 Capture camera; // カメラ
 MultiMarker[] markers; // マーカー
+
 Character[] characters; // キャラクターの配列変数
-int character_num = 4; // キャラクターの数
-int attackerIndex = -1; // 攻撃側キャラクターの
+int character_num = 3; // キャラクターの数
+
+int attackerIndex = -1; // 攻撃側キャラクターのインデックス
 int victimIndex = -1; // 被攻撃側キャラクターのインデックス
-boolean isAttacking = false; // 攻撃開始フラグ
+
+boolean isAttacking = false; // 攻撃フラグ
 int attackMarkerIndex = 3; // 攻撃マーカーのインデックス
 
 // キャラクターのクラス //
@@ -37,7 +40,7 @@ class Character {
       this.maxHP = 0;
       this.HP = 0;
       this.ATK = 0;
-      this.filename = "OBJ.obj";
+      shape = loadShape("OBJ.obj");
       this.scale = 0.5;
     }
   }
@@ -51,8 +54,9 @@ void setup() {
   camera.start(); // カメラ起動
   
   // ARの設定 //
-  markers = new MultiMarker[character_num];
-  for (int i = 0; i < markers.length; i++) {
+  int marker_num = 10;
+  markers = new MultiMarker[marker_num];
+  for (int i = 0; i < marker_num; i++) {
     markers[i] = new MultiMarker(this, width, height, "camera_para.dat", NyAR4PsgConfig.CONFIG_PSG);
     markers[i].addNyIdMarker(i, 80); // マーカ登録(ID, マーカの幅)
   }
@@ -62,6 +66,7 @@ void setup() {
   characters[0] = new Character("greenpepper.obj", 100, 10, 0.2);
   characters[1] = new Character("rocket.obj", 90, 15, 0.3);
   characters[2] = new Character("SubstancePlayerExport.obj", 150, 30, 0.7);
+
 }
 
 void draw() {
