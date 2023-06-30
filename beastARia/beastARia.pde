@@ -132,16 +132,6 @@ void draw() {
             playerIndex = i;
           }
 
-          // 攻撃エフェクト //
-          if (cards[i].attackBall != null) {
-            cards[i].attackBall.update();
-            cards[i].attackBall.draw();
-
-            if (i != enemyIndex && cards[i].attackBall.isHit(cards[enemyIndex])) {
-              cards[i].attackBall = null;
-              cards[enemyIndex].takeDamage(cards[i].ATK);
-            }
-          }
         }
 
         fill(255); // 初期化
