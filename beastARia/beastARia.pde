@@ -35,9 +35,6 @@ class Character {
   float rotate_value = 0.0;
   int updown_value = 0;
 
-  AttackBall attackBall = null;
-
-
   Character(String filename) {
     shape = loadShape(filename);
     setParameter(filename);
@@ -70,36 +67,7 @@ class Character {
   }
 }
 
-// 攻撃エフェクト //
-// 攻撃ボールのクラス
-class AttackEffect {
-  PVector position;
-  PVector velocity;
-
-  AttackEffect(PVector pos, PVector vel) {
-    this.position = pos;
-    this.velocity = vel;
-  }
-
-  void update() {
-    this.position.add(this.velocity);
-  }
-
-  void draw() {
-    pushMatrix();
-    translate(position.x, position.y, position.z);
-    fill(255, 0, 0);
-    sphere(5);
-    popMatrix();
-  }
-
-  boolean isHit(Character enemy) {
-    PVector enemyPos = new PVector(0, 0, enemy.height);
-    float dist = PVector.dist(this.position, enemyPos);
-    return dist < 20; // Adjust this value based on the sizes of your models and the attack ball
-  }
-}
-// 設定 //
+// 初期設定 //
 void setup() {
   // ウィンドウ&カメラの設定 //
   size(640, 480, P3D); // ウィンドウのサイズ
