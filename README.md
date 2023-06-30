@@ -24,8 +24,9 @@
 
 [プロジェクトのインストール手順をここに挿入する。依存関係や環境要件についても記述する]
 
-```bash
-$ git clone https://github.com/your/repository.git
-$ cd project-directory
-$ npm install  # または他の必要なパッケージマネージャを使用する
+```
+git init // ローカルリポジトリ作成
+git add 「ファイル名」 or 「.」　// インデックスへ追加
+git commit -m "メッセージ" // コミット
+git push
 ```
