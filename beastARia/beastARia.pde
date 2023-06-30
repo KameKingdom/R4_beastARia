@@ -1,5 +1,3 @@
-// Ctrl + shift + B　実行 //
-
 // ライブラリのインポート
 import processing.video.*;
 import jp.nyatla.nyar4psg.*;
@@ -8,44 +6,100 @@ import jp.nyatla.nyar4psg.*;
 Capture camera; // カメラ
 MultiMarker[] markers; // マーカー
 
-Character[] characters; // キャラクターの配列変数
+Character[] cards; // キャラクターの配列変数
 int character_num = 3; // キャラクターの数
+int cards_num = character_num + 1 + 1 + 1;
 
-int attackerIndex = -1; // 攻撃側キャラクターのインデックス
-int victimIndex = -1; // 被攻撃側キャラクターのインデックス
+int playerIndex = -1;
+int enemyIndex = character_num; // 敵のモンスターのインデックス
+int checkStatusIndex = enemyIndex + 1; // ステータス確認用マーカーのインデックス
+int attackMarkerIndex = checkStatusIndex + 1; // 攻撃用マーカーのインデックス
 
 boolean isAttacking = false; // 攻撃フラグ
-int attackMarkerIndex = 3; // 攻撃マーカーのインデックス
+boolean isCheckingStatus = false; // ステータス確認フラグ
+
+int turn = 1;
+String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
 
 // キャラクターのクラス //
 class Character {
   PShape shape;
+  String name;
   int HP;
   int ATK;
   float scale;
-  int maxHP;
-  int damage = 0;
+  float angle = 0.0; // 角度
+  int height = 0; // 高度
+  // 動きに関するパラメータ //
   
-  Character(String filename, int maxHP, int ATK, float scale) {
+  float rotate_value = 0.0;
+  int updown_value = 0;
+
+  AttackBall attackBall = null;
+
+
+  Character(String filename) {
     shape = loadShape(filename);
-    this.maxHP = maxHP;
-    this.HP = maxHP - damage;
-    this.ATK = ATK;
-    this.scale = scale;
+    setParameter(filename);
+  }
+
+  void setParameter(String filename){
+    if(filename.equals("greenpepper.obj")){ this.name = "GreenPepper"; this.HP = 100; this.ATK = 10; this.scale = 0.2; this.rotate_value = 0.05;}
+    else if(filename.equals("rocket.obj")){ this.name = "Rocket"; this.HP = 90; this.ATK = 15; this.scale = 0.3; this.rotate_value = 0.05;}
+    else if(filename.equals("SubstancePlayerExport.obj")){ this.name = "Plane"; this.HP = 150; this.ATK = 30; this.scale = 0.7; this.updown_value = 1; }
+    else{this.name = "unknown"; this.HP = 0; this.ATK = 0; this.scale = 0;}
   }
   
   void takeDamage(int damage) {
     this.HP -= damage;
     if (this.HP <= 0){ // 死んだ際にお墓にする
-      this.maxHP = 0;
+      shape = loadShape("OBJ.obj");
       this.HP = 0;
       this.ATK = 0;
-      shape = loadShape("OBJ.obj");
       this.scale = 0.5;
+      this.rotate_value = 0.0;
+      this.updown_value = 0;
     }
+  }
+
+  void move(){
+    if(this.height < 10){ this.updown_value = abs(this.updown_value);}
+    if(this.height > 50){ this.updown_value = - abs(this.updown_value);}
+    this.angle += this.rotate_value;
+    this.height += this.updown_value;
   }
 }
 
+// 攻撃エフェクト //
+// 攻撃ボールのクラス
+class AttackEffect {
+  PVector position;
+  PVector velocity;
+
+  AttackEffect(PVector pos, PVector vel) {
+    this.position = pos;
+    this.velocity = vel;
+  }
+
+  void update() {
+    this.position.add(this.velocity);
+  }
+
+  void draw() {
+    pushMatrix();
+    translate(position.x, position.y, position.z);
+    fill(255, 0, 0);
+    sphere(5);
+    popMatrix();
+  }
+
+  boolean isHit(Character enemy) {
+    PVector enemyPos = new PVector(0, 0, enemy.height);
+    float dist = PVector.dist(this.position, enemyPos);
+    return dist < 20; // Adjust this value based on the sizes of your models and the attack ball
+  }
+}
+// 設定 //
 void setup() {
   // ウィンドウ&カメラの設定 //
   size(640, 480, P3D); // ウィンドウのサイズ
@@ -62,11 +116,13 @@ void setup() {
   }
 
   // キャラクターの作成 //
-  characters = new Character[character_num];
-  characters[0] = new Character("greenpepper.obj", 100, 10, 0.2);
-  characters[1] = new Character("rocket.obj", 90, 15, 0.3);
-  characters[2] = new Character("SubstancePlayerExport.obj", 150, 30, 0.7);
-
+  cards = new Character[cards_num];
+  cards[0] = new Character("greenpepper.obj"); // 自陣モンスターを設定
+  cards[1] = new Character("rocket.obj");
+  cards[2] = new Character("SubstancePlayerExport.obj");
+  cards[enemyIndex] = null; // 敵陣モンスターの初期化
+  cards[checkStatusIndex] = null; // ステータス確認マーカー
+  cards[attackMarkerIndex] = null; // 攻撃用マーカー
 }
 
 void draw() {
@@ -82,57 +138,92 @@ void draw() {
         markers[i].beginTransform(0); // マーカー中心を原点に設定
         
         // キャラクター //
-        if (i < character_num) {
+        if (i <= character_num && cards[i] != null) {
+          cards[i].move();
           pushMatrix();
-          scale(characters[i].scale);
+          translate(0, 0, cards[i].height);
+          scale(cards[i].scale);
           rotateX(PI / 2);
-          shape(characters[i].shape);
+          rotateY(cards[i].angle);
+          shape(cards[i].shape);
           popMatrix();
-          
+
           // HPの表示 //
-          int textSize = 60;
+          if (i == enemyIndex && cards[i].HP != 0) { // Only show HP for enemy
+            int textSize = 60;
+            pushMatrix();
+            translate(-textSize/2, 0, 100);
+            textMode(SHAPE);
+            textSize(textSize);
+            rotateX(- PI / 2);
+            fill(255);
+            text(cards[i].HP, 0, 0); 
+            popMatrix();
+          }
+          else{
+            playerIndex = i;
+          }
+
+          // 攻撃エフェクト //
+          if (cards[i].attackBall != null) {
+            cards[i].attackBall.update();
+            cards[i].attackBall.draw();
+
+            if (i != enemyIndex && cards[i].attackBall.isHit(cards[enemyIndex])) {
+              cards[i].attackBall = null;
+              cards[enemyIndex].takeDamage(cards[i].ATK);
+            }
+          }
+        }
+
+        fill(255); // 初期化
+
+        // ステータス確認マーカーが認識されたら、ステータスを表示します。
+        if (i == checkStatusIndex && playerIndex != -1) {
+          isCheckingStatus = true;
+          int textSize = 30;
           pushMatrix();
-          translate(-textSize/2, 0, 100);
+          translate(-textSize/2, 0, 150);
           textMode(SHAPE);
           textSize(textSize);
           rotateX(- PI / 2);
           fill(255);
-          text(characters[i].HP, 0, 0); 
+          text(cards[playerIndex].name + "\nHP: " + cards[playerIndex].HP + "\nATK: " + cards[playerIndex].ATK, 0, 0); 
           popMatrix();
+          isCheckingStatus = false;
         }
-
-        fill(255); // 初期化
-        
         markers[i].endTransform(); // マーカー中心を原点から解除
-        
-        // 攻撃マーカーが認識されたら、直前のキャラクターマーカーが攻撃を行います。
-        if (i == attackMarkerIndex && attackerIndex >= 0) {
-          isAttacking = true;
-        }
-      } else {
-        // マーカーが認識されなかったら、攻撃者のインデックスをリセットします。
-        if (i == attackerIndex) {
-          attackerIndex = -1;
-        }
       }
     }
-
-    if (isAttacking) {
-      characters[victimIndex].takeDamage(characters[attackerIndex].ATK);
+    
+    if (cards[enemyIndex] == null) {
+      int randomIndex = (int) random(0, enemyMonsterFiles.length);
+      cards[enemyIndex] = new Character(enemyMonsterFiles[randomIndex]);
+    }
+    if (isAttacking) { // 攻撃
       isAttacking = false;
-      attackerIndex = -1;
+      cards[enemyIndex].takeDamage(cards[playerIndex].ATK);
+      cards[playerIndex].takeDamage(cards[enemyIndex].ATK);
+    }
+    if (playerIndex != -1){ // 結果表示
+      if (cards[enemyIndex].HP == 0){showMessage("あなたの勝ちです"); exit();}
+      if (cards[playerIndex].HP == 0){showMessage("あなたの負けです"); exit();}
     }
   }
 }
 
 void keyReleased() {
   if (key == 'a') {
-    String victim = prompt("被攻撃者の番号を入力してください(0~2): ");
-    victimIndex = Integer.parseInt(victim);
+    isAttacking = true;
   }
 }
 
 // ダイアログで数字を入力するための関数
-String prompt(String message) {
+String showPrompt(String message) {
   return javax.swing.JOptionPane.showInputDialog(message);
+}
+
+// ダイアログでメッセージを表示する関数
+void showMessage(String message) {
+  javax.swing.JOptionPane.showMessageDialog(null, message);
 }
