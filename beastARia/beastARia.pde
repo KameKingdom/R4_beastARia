@@ -66,6 +66,8 @@ class Character {
   float scale;
   float angle = 0.0; // 角度
   int height = 0; // 高度
+  ParticleSystem ps; // エフェクト
+
   // 動きに関するパラメータ //
   
   float rotate_value = 0.0;
@@ -73,6 +75,7 @@ class Character {
 
   Character(String filename) {
     shape = loadShape(filename);
+    ps = new ParticleSystem(100, new PVector(0, 0));
     setParameter(filename);
   }
 
@@ -95,7 +98,11 @@ class Character {
       this.rotate_value = 0.0;
       this.updown_value = 0;
     }
+    runParticleSystem(); // Damage taken so run particle system
   }
+
+
+  void runParticleSystem() { ps.run(); }
 
   void move(){
     if(this.height < 10){ this.updown_value = abs(this.updown_value);}
@@ -104,6 +111,69 @@ class Character {
     this.height += this.updown_value;
   }
 }
+
+class Particle {
+  PVector position;
+  PVector velocity;
+  PVector acceleration;
+  float lifespan;
+  
+  Particle(PVector l) {
+    acceleration = new PVector(0, 0.05);
+    velocity = new PVector(random(-1, 1), random(-2, 0));
+    position = l.get();
+    lifespan = 100.0;
+  }
+  
+  void run() {
+    update();
+    display();
+  }
+  
+  void update() {
+    velocity.add(acceleration);
+    position.add(velocity);
+    lifespan -= 2.0;
+  }
+  
+  void display() {
+    stroke(255, lifespan);
+    fill(255, 0, 0, lifespan);  // Fill red color for particles
+    ellipse(position.x, position.y, 8, 8);
+  }
+  
+  boolean isDead() {
+    return lifespan < 0;
+  }
+}
+
+class ParticleSystem {
+  ArrayList<Particle> particles;
+  PVector origin;
+  
+  ParticleSystem(int num, PVector v) {
+    particles = new ArrayList<Particle>();
+    origin = v.get();
+    for (int i = 0; i < num; i++) {
+      particles.add(new Particle(origin));
+    }
+  }
+  
+  void addParticle() {
+    particles.add(new Particle(origin));
+  }
+  
+  void run() {
+    for (int i = particles.size()-1; i >= 0; i--) {
+      Particle p = particles.get(i);
+      p.run();
+      if (p.isDead()) {
+        particles.remove(i);
+      }
+    }
+  }
+}
+
 
 void draw() {
   if (camera.available()) {
@@ -139,8 +209,10 @@ void draw() {
           shape(cards[i].shape);
           popMatrix();
 
+          cards[i].runParticleSystem();
+
           // HPの表示 //
-          if (i == enemyIndex && cards[i].HP != 0) { // Only show HP for enemy
+          if (i == enemyIndex) { // Only show HP for enemy
             int textSize = 60;
             pushMatrix();
             translate(-textSize/2, 0, 100);
@@ -202,11 +274,17 @@ void keyReleased() {
     attackSound.play();
     isAttacking = true;
     isFinished = false;
+    if (playerIndex != -1) {  // Check if player index has been set
+      cards[playerIndex].runParticleSystem(); // Run particle system on attack
+    }
+    turn += 1;
+    message = "You attack the monster!";
   }
   if (key == 'q'){
     exit();
   }
 }
+
 
 // ダイアログで数字を入力するための関数
 String showPrompt(String message) {
