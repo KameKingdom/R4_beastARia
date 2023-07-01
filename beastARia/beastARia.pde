@@ -43,7 +43,7 @@ boolean isWin = false; // 勝利フラグ
 
 int turn = 1;
 String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
-String message = "Welcome to beastARia !!";
+String message = "Scan Your Card !!";
 
 // 初期設定 //
 void setup() {
@@ -210,6 +210,7 @@ void draw() {
             }
             else if(i != enemyIndex){
               playerIndex = i;
+              message = "Your food is " + cards[i].name;
             }
           }
 
@@ -285,7 +286,6 @@ void draw() {
 void keyReleased() {
   if (key == 'a') {
     if (!isFinished){
-      message = "Attack monster";
       attackSound.play();
       isAttacking = true;
       turn += 1;
