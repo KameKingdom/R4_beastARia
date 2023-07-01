@@ -21,10 +21,11 @@ int attackMarkerIndex = checkStatusIndex + 1; // 攻撃用マーカーのイン�
 
 boolean isAttacking = false; // 攻撃フラグ
 boolean isCheckingStatus = false; // ステータス確認フラグ
+boolean isFinished = false; // 終了フラグ
 
 int turn = 1;
 String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
-
+String message = "Message Box !!";
 // 初期設定 //
 void setup() {
   // ウィンドウ&カメラの設定 //
@@ -89,6 +90,8 @@ class Character {
       this.HP = 0;
       this.ATK = 0;
       this.scale = 0.5;
+      this.angle = 0.0;
+      this.height = 0;
       this.rotate_value = 0.0;
       this.updown_value = 0;
     }
@@ -106,7 +109,18 @@ void draw() {
   if (camera.available()) {
     camera.read();
     lights();
-    
+
+    // メッセージボックスの描画
+    fill(220);
+    stroke(0);
+    rect(0, 0, 640, 40); // 上
+    rect(0, 400, 640, 80); // 下
+
+    fill(0);
+    textSize(24);
+    text("turn " + turn, (width - textWidth("turn " + turn)) / 2, 27);
+    text(message, (width - textWidth(message)) / 2, 445);
+      
     for (int i = 0; i < markers.length; i++) {
       markers[i].detect(camera);
       markers[i].drawBackground(camera);
@@ -173,8 +187,12 @@ void draw() {
       cards[playerIndex].takeDamage(cards[enemyIndex].ATK);
     }
     if (playerIndex != -1 || (cards[enemyIndex].HP == 0)){ // 結果表示
-      if (cards[enemyIndex].HP == 0){showMessage("あなたの勝ちです"); exit();}
-      if (cards[playerIndex].HP == 0){showMessage("あなたの負けです"); exit();}
+      if (cards[enemyIndex].HP == 0){
+        message = "You WIN !!";
+      }
+      else if (cards[playerIndex].HP == 0){
+        message = "You cannot give up yet...";
+      }
     }
   }
 }
@@ -183,6 +201,10 @@ void keyReleased() {
   if (key == 'a') {
     attackSound.play();
     isAttacking = true;
+    isFinished = false;
+  }
+  if (key == 'q'){
+    exit();
   }
 }
 
