@@ -1,6 +1,10 @@
 // ライブラリのインポート
 import processing.video.*;
 import jp.nyatla.nyar4psg.*;
+import processing.sound.*; 
+
+SoundFile bgm;
+SoundFile attackSound;
 
 // 変数の宣言 //
 Capture camera; // カメラ
@@ -20,6 +24,37 @@ boolean isCheckingStatus = false; // ステータス確認フラグ
 
 int turn = 1;
 String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
+
+// 初期設定 //
+void setup() {
+  // ウィンドウ&カメラの設定 //
+  size(640, 480, P3D); // ウィンドウのサイズ
+  String[] cameras = Capture.list(); // 使用可能カメラの取得
+  camera = new Capture(this, cameras[cameras.length - 1]); // カメラを設定
+  camera.start(); // カメラ起動
+
+  // 効果音設定 //
+  bgm = new SoundFile(this, "sound/bgm.wav");
+  bgm.loop();
+  attackSound = new SoundFile(this, "sound/attack.wav");
+  
+  // ARの設定 //
+  int marker_num = 10;
+  markers = new MultiMarker[marker_num];
+  for (int i = 0; i < marker_num; i++) {
+    markers[i] = new MultiMarker(this, width, height, "camera_para.dat", NyAR4PsgConfig.CONFIG_PSG);
+    markers[i].addNyIdMarker(i, 80); // マーカ登録(ID, マーカの幅)
+  }
+
+  // キャラクターの作成 //
+  cards = new Character[cards_num];
+  cards[0] = new Character("greenpepper.obj"); // 自陣モンスターを設定
+  cards[1] = new Character("rocket.obj");
+  cards[2] = new Character("SubstancePlayerExport.obj");
+  cards[enemyIndex] = null; // 敵陣モンスターの初期化
+  cards[checkStatusIndex] = null; // ステータス確認マーカー
+  cards[attackMarkerIndex] = null; // 攻撃用マーカー
+}
 
 // キャラクターのクラス //
 class Character {
@@ -65,32 +100,6 @@ class Character {
     this.angle += this.rotate_value;
     this.height += this.updown_value;
   }
-}
-
-// 初期設定 //
-void setup() {
-  // ウィンドウ&カメラの設定 //
-  size(640, 480, P3D); // ウィンドウのサイズ
-  String[] cameras = Capture.list(); // 使用可能カメラの取得
-  camera = new Capture(this, cameras[cameras.length - 1]); // カメラを設定
-  camera.start(); // カメラ起動
-  
-  // ARの設定 //
-  int marker_num = 10;
-  markers = new MultiMarker[marker_num];
-  for (int i = 0; i < marker_num; i++) {
-    markers[i] = new MultiMarker(this, width, height, "camera_para.dat", NyAR4PsgConfig.CONFIG_PSG);
-    markers[i].addNyIdMarker(i, 80); // マーカ登録(ID, マーカの幅)
-  }
-
-  // キャラクターの作成 //
-  cards = new Character[cards_num];
-  cards[0] = new Character("greenpepper.obj"); // 自陣モンスターを設定
-  cards[1] = new Character("rocket.obj");
-  cards[2] = new Character("SubstancePlayerExport.obj");
-  cards[enemyIndex] = null; // 敵陣モンスターの初期化
-  cards[checkStatusIndex] = null; // ステータス確認マーカー
-  cards[attackMarkerIndex] = null; // 攻撃用マーカー
 }
 
 void draw() {
@@ -163,7 +172,7 @@ void draw() {
       cards[enemyIndex].takeDamage(cards[playerIndex].ATK);
       cards[playerIndex].takeDamage(cards[enemyIndex].ATK);
     }
-    if (playerIndex != -1){ // 結果表示
+    if (playerIndex != -1 || (cards[enemyIndex].HP == 0)){ // 結果表示
       if (cards[enemyIndex].HP == 0){showMessage("あなたの勝ちです"); exit();}
       if (cards[playerIndex].HP == 0){showMessage("あなたの負けです"); exit();}
     }
@@ -172,6 +181,7 @@ void draw() {
 
 void keyReleased() {
   if (key == 'a') {
+    attackSound.play();
     isAttacking = true;
   }
 }
