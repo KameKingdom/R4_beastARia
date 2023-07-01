@@ -4,6 +4,8 @@ import jp.nyatla.nyar4psg.*;
 import processing.sound.*; 
 
 SoundFile bgm;
+SoundFile instructionSound;
+SoundFile openingSound;
 SoundFile attackSound;
 SoundFile winSound;
 SoundFile loseSound;
@@ -19,9 +21,9 @@ int windowHandler = 0; // windowのhandler
 2: 
 **/
 
-// opening window 用変数//
 String title = "beastARia";
 String guideMessage = "PRESS N OR ENTER to continue...";
+String instructionMessage = "[A]  -  ATTACK \n[N]  -  NEXT WINDOW \n[Q]  -  QUIT \nWhen HP is 0, you lose";
 
 // battle window　用変数 //
 Character[] cards; // キャラクターの配列変数
@@ -36,6 +38,8 @@ int attackMarkerIndex = checkStatusIndex + 1; // 攻撃用マーカーのイン�
 boolean isAttacking = false; // 攻撃フラグ
 boolean isCheckingStatus = false; // ステータス確認フラグ
 boolean isFinished = false; // 終了フラグ
+boolean isChangedMusic = true; // 音楽変更フラグ
+boolean isWin = false; // 勝利フラグ
 
 int turn = 1;
 String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
@@ -51,11 +55,11 @@ void setup() {
 
   // 効果音設定 //
   bgm = new SoundFile(this, "sound/bgm.wav");
+  instructionSound = new SoundFile(this, "sound/instruction.wav");
+  openingSound = new SoundFile(this, "sound/opening.wav");
   attackSound = new SoundFile(this, "sound/attack.wav");
   winSound = new SoundFile(this, "sound/win.wav");
   loseSound = new SoundFile(this, "sound/lose.wav");
-
-  bgm.loop();
 
   // ARの設定 //
   int marker_num = 10;
@@ -126,15 +130,39 @@ class Character {
 
 void draw() {
   if (windowHandler == 0) { // Opening Window
+    if (isChangedMusic){
+      openingSound.loop();
+      isChangedMusic = false;
+    }
     background(0);
     fill(255);
     textSize(48);
     text(title, (width - textWidth(title)) / 2, height / 2);
     fill(200);
     textSize(18);
-    text(guideMessage, (width - textWidth(guideMessage)) / 2, height / 2 + 100);
+    text(guideMessage, (width - textWidth(guideMessage)) / 2, 300);
   }
-  else if (windowHandler == 1){ // Battle Window
+  else if (windowHandler == 1){ // Instruction Window
+    if (isChangedMusic){
+      openingSound.stop();
+      instructionSound.loop();
+      isChangedMusic = false;
+    }
+    background(0);
+    fill(255);
+    textSize(30);
+    text("-- Instruction --", (width - textWidth("-- Instruction --")) / 2, 45);
+    text(instructionMessage, 200, 150);
+    fill(200);
+    textSize(18);
+    text(guideMessage, (width - textWidth(guideMessage)) / 2, 400);
+  }
+  else if (windowHandler == 2){ // Battle Window
+    if (isChangedMusic){
+      instructionSound.stop();
+      bgm.loop();
+      isChangedMusic = false;
+    }
     if (camera.available()) {
       camera.read();
       lights();
@@ -216,43 +244,59 @@ void draw() {
       }
       if (playerIndex != -1 || (cards[enemyIndex].HP == 0)){ // 結果表示
         if (cards[enemyIndex].HP == 0){
-          result(true);
+          message = "YOU WIN !! PRESS N or ENTER";
+          isFinished = true;
+          isWin = true;
         }
         else if (cards[playerIndex].HP == 0){
-          result(false);
+          message = "YOU LOSE !! PRESS N or ENTER";
+          isFinished = true;
+          isWin = false;
         }
       }
     }
+  }
+  else if (windowHandler == 3){ // Result Window
+    if (isChangedMusic){
+      bgm.stop();
+      if (isWin){
+        winSound.loop();
+        title = "GAME CLEAR";
+      }
+      else { 
+        loseSound.loop();
+        title = "GAME OVER";
+      }
+      isChangedMusic = false;
+      background(0);
+    }
+    fill(255);
+    textSize(48);
+    text(title, (width - textWidth(title)) / 2, height / 2);
+    fill(200);
+    textSize(18);
+    text(guideMessage, (width - textWidth(guideMessage)) / 2, 400);
   }
   else{
     exit();
   }
 }
 
-void result(boolean isWin){
-  bgm.stop();
-  // 勝利: 1, 敗北: 0
-  if (isWin) {
-    winSound.play();
-  }
-  else{
-    loseSound.play();
-  }
-}
-
 void keyReleased() {
   if (key == 'a') {
-    attackSound.play();
-    isAttacking = true;
-    isFinished = false;
-    turn += 1;
-    message = "You attack the monster!";
+    if (!isFinished){
+      message = "Attack monster";
+      attackSound.play();
+      isAttacking = true;
+      turn += 1;
+    }
   }
   if (key == 'q'){
     exit();
   }
   if (key == 'n' || keyCode == ENTER){
     windowHandler += 1;
+    isChangedMusic = true;
   }
 }
 
