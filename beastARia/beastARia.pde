@@ -18,7 +18,9 @@ int windowHandler = 0; // windowのhandler
 /**
 0: opening
 1: instruction
-2: 
+2: battle
+3: result
+4: exit();
 **/
 
 String title = "beastARia";
@@ -42,7 +44,7 @@ boolean isChangedMusic = true; // 音楽変更フラグ
 boolean isWin = false; // 勝利フラグ
 
 int turn = 1;
-String[] enemyMonsterFiles = {"greenpepper.obj", "rocket.obj", "SubstancePlayerExport.obj"}; // 敵モンスターのファイル名
+String[] enemyMonsterFiles = {"greenpepper.obj", "apple.obj", "Chicken.obj"}; // 敵モンスターのファイル名
 String message = "Scan Your Card !!";
 
 // 初期設定 //
@@ -72,8 +74,8 @@ void setup() {
   // キャラクターの作成 //
   cards = new Character[cards_num];
   cards[0] = new Character("greenpepper.obj"); // 自陣モンスターを設定
-  cards[1] = new Character("rocket.obj");
-  cards[2] = new Character("SubstancePlayerExport.obj");
+  cards[1] = new Character("apple.obj");
+  cards[2] = new Character("Chicken.obj");
   cards[enemyIndex] = null; // 敵陣モンスターの初期化
   cards[checkStatusIndex] = null; // ステータス確認マーカー
   cards[attackMarkerIndex] = null; // 攻撃用マーカー
@@ -101,8 +103,8 @@ class Character {
 
   void setParameter(String filename){
     if(filename.equals("greenpepper.obj")){ this.name = "GreenPepper"; this.HP = 100; this.ATK = 10; this.scale = 0.2; this.rotate_value = 0.05;}
-    else if(filename.equals("rocket.obj")){ this.name = "Rocket"; this.HP = 90; this.ATK = 15; this.scale = 0.3; this.rotate_value = 0.05;}
-    else if(filename.equals("SubstancePlayerExport.obj")){ this.name = "Plane"; this.HP = 150; this.ATK = 30; this.scale = 0.7; this.updown_value = 1; }
+    else if(filename.equals("apple.obj")){ this.name = "apple"; this.HP = 90; this.ATK = 15; this.scale = 200; this.rotate_value = 0.05;}
+    else if(filename.equals("Chicken.obj")){ this.name = "Plane"; this.HP = 150; this.ATK = 30; this.scale = 0.7; this.updown_value = 1; }
     else{this.name = "unknown"; this.HP = 0; this.ATK = 0; this.scale = 0;}
   }
   
